@@ -2,6 +2,8 @@
 .mode column
 
 -- 1.1
+SELECT * 
+FROM locations;
 
 
 -- 1.2
