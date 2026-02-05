@@ -33,11 +33,15 @@ CREATE TABLE members (
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE CHECK (email GLOB '*@*.*'),
-    phone_number VARCHAR(20) CHECK (LENGTH(phone_number) >=12),
-    date_of_birth DATE NOT NULL CHECK (date_of_brirth , DATE('now')),
-    join_date DATE NOT NULL DEFAULT (DATE('now')) CHECK(join_date <= DATE('now')),
-    emergency_contact_name VARCHAR(100) NOT NULL,
-    emergency_contact_phone VARCHAR(20) NOT NULL CHECK(LENGTH(emergency_contact_phone) >= 10),
+    phone_number VARCHAR(20) 
+    CHECK (LENGTH(phone_number) >=10),
+    date_of_birth DATE NOT NULL
+    CHECK (date_of_brirth , DATE('now')),
+    join_date DATE NOT NULL DEFAULT (DATE('now'))
+    CHECK(join_date <= DATE('now')),
+    emergency_contact_name VARCHAR(50) NOT NULL,
+    emergency_contact_phone VARCHAR(15) NOT NULL
+    CHECK(LENGTH(emergency_contact_phone) >= 10),
     CHECK (join_date > date_of_birth)
     
 );
@@ -48,14 +52,17 @@ CREATE TABLE staff (
     staff_id INTEGER PRIMARY KEY NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(100) UNIQUE CHECK (email GLOB '*@*.*'), 
-    phone_number VARCHAR(20) NOT NULL CHECK (LENGTH(phone_number) >=12),
-    position VARCHAR(20) NOT NULL CHECK IN ('Trainer','Manager','Receptionist','Maintenance'))
+    email VARCHAR(100) UNIQUE
+    CHECK (email GLOB '*@*.*'), 
+    phone_number VARCHAR(20) NOT NULL 
+    CHECK (LENGTH(phone_number) >=12),
+    position VARCHAR(20) NOT NULL 
+    CHECK IN ('Trainer','Manager','Receptionist','Maintenance'))
     hire_date DATE NOT NULL CHECK(hire_date <= DATE('now')),
     location_id INTEGER NOT NULL,
     FOREIGN KEY (location_id)
         REFERENCES locations (location_id)
-        ON DELETE RESTRICT
+        ON DELETE SET NULL
         ON UPDATE CASCADE
 
 );
@@ -67,68 +74,74 @@ CREATE TABLE equipment (
     name VARCHAR(100) NOT NULL,
     type VARCHAR(20) NOT NULL
         CHECK (type IN ('Cardio','Strength')),
-    purchase_date DATE,
-    last_maintenance_date DATE,
-    next_maintenance_date DATE,
+    purchase_date DATE NOT NULL 
+        CHECK(purchase_date <= DATE('now')),
+    last_maintenance_date DATE
+        CHECK(last_maintenance_Date <= DATE('now')) 
+        CHECK(next_maintenance_date >= purchase_date),
+    next_maintenance_date DATE
+         CHECK (next_maintenance_date > last_maintenance_date),
     location_id INTEGER NOT NULL,
     FOREIGN KEY (location_id)
         REFERENCES locations (location_id)
-        ON DELETE CASCADE,
-    UNIQUE (name, location_id)
+        ON DELETE SET NULL,
+        ON UPDATE CASCADE,
+    CHECK(last_maintenance_Date <= DATE('now'))
 
 );
 
 
 --class 
 CREATE TABLE classes
-    class_id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
+    class_id INTEGER PRIMARY KEY NOT NULL,
+    name VARCHAR(100) NOT NULL,
     description TEXT,
     capacity INTEGER NOT NULL
         CHECK(capacity > 0),
     duration INTEGER NOT NULL
         CHECK (duration > 0),
-    duration INTEGER NOT NULL
-        CHECK (duration > 0),
     location_id INTEGER NOT NULL,
     FOREIGN KEY (location_id)
         REFERENCES locations (location_id)
-        ON DELETE NULL
+        ON DELETE SET NULL
     
 );
 
 
 --class schedule
 CREATE TABLE class_schedule (
-    schedule_id INTEGER PRIMARY KEY,
+    schedule_id INTEGER PRIMARY KEY NOT NULL,
     class_id INTEGER NOT NULL,
     staff_id INTEGER NOT NULL,
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
-    FOREIGN KEY (class_id)
-        REFERENCES classes(class_id)
+    CHECK(end_time > start_time),
+    FOREIGN KEY (class_id),
+        REFERENCES classes(class_id),
         ON DELETE CASCADE,
-    FOREIGN KEY(staff_id)
-        REFERENCES staff(staff_id)
+        ON UPDATE CASCADE
+    FOREIGN KEY(staff_id),
+        REFERENCES staff(staff_id),
         ON DELETE CASCADE,
-    CHECK (end_time > start_time)
+        ON UPDATE CASCADE,
 );
 
 --memberships
 
 CREATE TABLE memberships(
-    membership_id INTEGER PRIMARY KEY,
+    membership_id INTEGER PRIMARY KEY NOT NULL,
     member_id INTEGER NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    status VARCHAR(20) NOT NULL
-        CHECK(status IN('Active','Inactive')),
+    membership_type VARCHAR(50) NOT NULL
+         CHECK (membership_type IN ('Monthly', 'Annual', 'Day Pass', 'Student', 'Senior'))
+    start_date DATE NOT NULL 
+         CHECK(start_date <= DATE('now')),
+    end_date DATE NOT NULL
+        CHECK(end_date > start_date),
+    status VARCHAR(20) NOT NULL DEFAULT 'Active' 
+        CHECK (status IN ('Active', 'Inactive')),
     FOREIGN KEY(member_id)
         REFERENCES members(member_id)
-        ON DELETE RESTRICT,
-    CHECK (end_date > start date),
-    UNIQUE (member_id, start_date)
+        ON DELETE CASCADE,
 
 
 );
@@ -136,25 +149,24 @@ CREATE TABLE memberships(
 --ATTENDANCE
 
 CREATE TABLE attendance (
-    attendance_id INTEGER PRIMARY KEY,
+    attendance_id INTEGER PRIMARY KEY NOT NULL,
     member_id INTEGER NOT NULL,
     location_id INTEGER NOT NULL,
     check_in_time DATETIME NOT NULL,
     check_out_time DATETIME,
+        CHECK (check_out_time IS NULL OR check_out_time > check_in_time)
     FOREIGN KEY (member_id)
         REFERENCES members(member_id)
         ON DELETE RESTRICT,
     FOREIGN KEY(location_id)
         REFERENCES locations(location_id)
         ON DELETE RESTRICT,
-    CHECK (check_out_time IS NULL OR check_out_time . check_in_time)
-
 );
 
 --class attendance
 
 CREATE TABLE class_attendance (
-    class_attendance_id INTEGER PRIMARY KEY,
+    class_attendance_id INTEGER PRIMARY KEY NOT NULL,
     schedule_id INTEGER NOT NULL,
     member_id INTEGER NOT NULL,
     attendance_status VARCHAR(20) NOT NULL
@@ -172,17 +184,17 @@ CREATE TABLE class_attendance (
 --PAYMENTS
 
 CREATE TABLE payments (
-    payment_id INTEGER PRIMARY KEY,
+    payment_id INTEGER PRIMARY KEY NOT NULL,
     member_id INTEGER NOT NULL,
-    amount REAL NOT NULL
+    amount DECIMAL(10, 2) NOT NULL
         CHECK (amount >= 0),
-    payment_dat DATETIME NOT NULL,
+    payment_datE DATETIME NOT NULL,
     payment_method VARCHAR(30) NOT NULL
         CHECK(payment_method IN ('Credit Card','Bank Transfer','Paypal')),
-    payment_type VARCHAR(50) NOT NULL,
+    payment_type VARCHAR(100) NOT NULL,
     FOREIGN KEY (member_id)
         REFERENCES members(member_id)
-        ON DELETE RESTRICT
+        ON DELETE NO ACTION
 
 );
 
@@ -193,25 +205,29 @@ CREATE TABLE personal_training_sessions (
     session_date DATE NOT NULL
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    notes VARCHAR(225),
+    notes VARCHAR(250),
     FOREIGN KEY (member_id)
         REFERENCES members(member_id)
-        ON DELETE RESTRICTM
+        ON DELETE RESTRICT
     FOREIGN KEY(staff_id)
         REFRENCES staff(staff_id)
-        ON DELETE RESTRICT,
+        ON DELETE NO ACTION,
     CHECK (end_time . start_time)
 
 );
 
 CREATE TABLE member_health_metrics (
-    metric_id INTEGER PRIMARY KEY,
+    metric_id INTEGER PRIMARY KEY NOT NULL,
     member_id INTEGER NOT NULL,
     measurement_date DATE NOT NULL,
-    weight REAL CHECK (weight . 0),
-    body_fat_percentage REAL CHECK (body_fat_percentage BETWEEN 0 AND 100),
-    muscle_mass REAL CHECK (muscle_mass >= 0),
-    bmi REAL CHECK (bmi > 0),
+    weight DECIMAL (5,2),
+        CHECK (weight is NULL OR weight > 0),
+    body_fat_percentage DECIMAL(5,2),
+        CHECK (body_fat_percentage BETWEEN 0 AND 100),
+    muscle_mass DECIMAL (5,2
+         CHECK (muscle_mass >= 0),
+    bmi DECIMAL (4,2)
+         CHECK (bmi > 0),
     FOREIGN KEY(member_id)
         REFERENCES members(member_id)
         ON DELETE RESTRICT,
@@ -220,7 +236,7 @@ CREATE TABLE member_health_metrics (
 );
 
 CREATE TABLE equipment_maintenance_log(
-    log_id INTEGER PRIMARY KEY,
+    log_id INTEGER PRIMARY KEY NOT NULL,
     equipment_id INTEGER NOT NULL,
     maintenance_date DATE NOT NULL,
     description VARCHAR(255),
