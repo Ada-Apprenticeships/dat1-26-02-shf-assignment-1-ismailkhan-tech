@@ -18,32 +18,38 @@ DROP TABLE IF EXISTS members;
 DROP TABLE IF EXISTS locations;
 
 --locations table
+
 CREATE TABLE locations (
     location_id INTEGER PRIMARY KEY NOT NULL,
     name VARCHAR(100) NOT NULL UNIQUE,
     address TEXT NOT NULL,
-    phone_number VARCHAR(20) CHECK (LENGTH(phone_number) >=12),
-    email VARCHAR(100) UNIQUE CHECK (email GLOB '*@*.*'), 
-    opening _hours VARCHAR(20) CHECK (opening_hours GLOB '[0-9][0-9]:[0-9][0-9]-[0-9][0-9]:[0-9][0-9]')
+    phone_number VARCHAR(20) 
+        CHECK (LENGTH(phone_number) >=12), -- phone number must inlucde 12+ char so it can include country code and spacing (e.g. +44 07467 095899")
+    email VARCHAR(100) UNIQUE 
+        CHECK (email GLOB '*@*.*'),  --GLOB ensures email has @ symbol and domain and is also faster than LIKE for simple stuff
+    opening_hours VARCHAR(20) 
+        CHECK (opening_hours GLOB '[0-9][0-9]:[0-9][0-9]-[0-9][0-9]:[0-9][0-9]')
+        --GLOB here makes sure the format is : HH:MM-HH:MM
+        --[0-9] match any single digit
     
 );
 
+--Members TABLE
 CREATE TABLE members (
     member_id INTEGER PRIMARY KEY NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(100) UNIQUE CHECK (email GLOB '*@*.*'),
+    email VARCHAR(100) UNIQUE 
+        CHECK (email GLOB '*@*.*'), --same email validation
     phone_number VARCHAR(20) 
-    CHECK (LENGTH(phone_number) >=10),
-    date_of_birth DATE NOT NULL
-    CHECK (date_of_brirth , DATE('now')),
-    join_date DATE NOT NULL DEFAULT (DATE('now'))
-    CHECK(join_date <= DATE('now')),
+        CHECK (LENGTH(phone_number) >=10), -- members phone numbers could be shorter and not include country code
+    date_of_birth DATE NOT NULL,
+    join_date DATE NOT NULL DEFAULT (DATE('now')),
     emergency_contact_name VARCHAR(50) NOT NULL,
     emergency_contact_phone VARCHAR(15) NOT NULL
-    CHECK(LENGTH(emergency_contact_phone) >= 10),
-    CHECK (join_date > date_of_birth)
-    
+        CHECK (LENGTH(emergency_contact_phone) >= 10),
+    CHECK (join_date > date_of_birth) -- logic check: person must be born before joining gym, on the table level
+
 );
 
 --staff
@@ -53,13 +59,13 @@ CREATE TABLE staff (
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE
-    CHECK (email GLOB '*@*.*'), 
+        CHECK (email GLOB '*@*.*'), 
     phone_number VARCHAR(20) NOT NULL 
-    CHECK (LENGTH(phone_number) >=12),
+        CHECK (LENGTH(phone_number) >=12), -- staff phones may be required to have a country code
     position VARCHAR(20) NOT NULL 
-    CHECK IN ('Trainer','Manager','Receptionist','Maintenance'))
-    hire_date DATE NOT NULL CHECK(hire_date <= DATE('now')),
-    location_id INTEGER NOT NULL,
+        CHECK (position IN ('Trainer','Manager','Receptionist','Maintenance')),
+    hire_date DATE NOT NULL, 
+    location_id INTEGER,
     FOREIGN KEY (location_id)
         REFERENCES locations (location_id)
         ON DELETE SET NULL
@@ -74,33 +80,32 @@ CREATE TABLE equipment (
     name VARCHAR(100) NOT NULL,
     type VARCHAR(20) NOT NULL
         CHECK (type IN ('Cardio','Strength')),
-    purchase_date DATE NOT NULL 
-        CHECK(purchase_date <= DATE('now')),
-    last_maintenance_date DATE
-        CHECK(last_maintenance_Date <= DATE('now')) 
-        CHECK(next_maintenance_date >= purchase_date),
-    next_maintenance_date DATE
-         CHECK (next_maintenance_date > last_maintenance_date),
-    location_id INTEGER NOT NULL,
+    purchase_date DATE NOT NULL,
+    last_maintenance_date DATE,
+    next_maintenance_date DATE,
+    location_id INTEGER,
+    --Date Check Constraints
+    CHECK (next_maintenance_date >= purchase_date),
+    CHECK (next_maintenance_date > last_maintenance_date OR last_maintenance_date IS NULL),
+    -- Reason i formatted it this way is because it does not do multi-column CHECK constraints at column level
     FOREIGN KEY (location_id)
         REFERENCES locations (location_id)
-        ON DELETE SET NULL,
-        ON UPDATE CASCADE,
-    CHECK(last_maintenance_Date <= DATE('now'))
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
 
 );
 
 
 --class 
-CREATE TABLE classes
+CREATE TABLE classes(
     class_id INTEGER PRIMARY KEY NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     capacity INTEGER NOT NULL
-        CHECK(capacity > 0),
+        CHECK (capacity > 0),
     duration INTEGER NOT NULL
         CHECK (duration > 0),
-    location_id INTEGER NOT NULL,
+    location_id INTEGER,
     FOREIGN KEY (location_id)
         REFERENCES locations (location_id)
         ON DELETE SET NULL
@@ -116,14 +121,14 @@ CREATE TABLE class_schedule (
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
     CHECK(end_time > start_time),
-    FOREIGN KEY (class_id),
-        REFERENCES classes(class_id),
-        ON DELETE CASCADE,
-        ON UPDATE CASCADE
-    FOREIGN KEY(staff_id),
-        REFERENCES staff(staff_id),
-        ON DELETE CASCADE,
+    FOREIGN KEY (class_id)
+        REFERENCES classes (class_id)
+        ON DELETE CASCADE
         ON UPDATE CASCADE,
+    FOREIGN KEY(staff_id)
+        REFERENCES staff(staff_id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 );
 
 --memberships
@@ -132,16 +137,15 @@ CREATE TABLE memberships(
     membership_id INTEGER PRIMARY KEY NOT NULL,
     member_id INTEGER NOT NULL,
     membership_type VARCHAR(50) NOT NULL
-         CHECK (membership_type IN ('Monthly', 'Annual', 'Day Pass', 'Student', 'Senior'))
-    start_date DATE NOT NULL 
-         CHECK(start_date <= DATE('now')),
+         CHECK (membership_type IN ('Monthly', 'Annual', 'Day Pass', 'Student', 'Senior')),
+    start_date DATE NOT NULL,
     end_date DATE NOT NULL
-        CHECK(end_date > start_date),
+        CHECK (end_date > start_date),
     status VARCHAR(20) NOT NULL DEFAULT 'Active' 
         CHECK (status IN ('Active', 'Inactive')),
     FOREIGN KEY(member_id)
         REFERENCES members(member_id)
-        ON DELETE CASCADE,
+        ON DELETE RESTRICT
 
 
 );
@@ -154,13 +158,13 @@ CREATE TABLE attendance (
     location_id INTEGER NOT NULL,
     check_in_time DATETIME NOT NULL,
     check_out_time DATETIME,
-        CHECK (check_out_time IS NULL OR check_out_time > check_in_time)
+        CHECK (check_out_time IS NULL OR check_out_time > check_in_time),
     FOREIGN KEY (member_id)
-        REFERENCES members(member_id)
+        REFERENCES members (member_id)
         ON DELETE RESTRICT,
-    FOREIGN KEY(location_id)
+    FOREIGN KEY (location_id)
         REFERENCES locations(location_id)
-        ON DELETE RESTRICT,
+        ON DELETE RESTRICT
 );
 
 --class attendance
@@ -188,31 +192,31 @@ CREATE TABLE payments (
     member_id INTEGER NOT NULL,
     amount DECIMAL(10, 2) NOT NULL
         CHECK (amount >= 0),
-    payment_datE DATETIME NOT NULL,
+    payment_date DATETIME NOT NULL,
     payment_method VARCHAR(30) NOT NULL
-        CHECK(payment_method IN ('Credit Card','Bank Transfer','Paypal')),
+        CHECK (payment_method IN ('Credit Card','Bank Transfer','PayPal')),
     payment_type VARCHAR(100) NOT NULL,
     FOREIGN KEY (member_id)
         REFERENCES members(member_id)
-        ON DELETE NO ACTION
+        ON DELETE RESTRICT
 
 );
 
 CREATE TABLE personal_training_sessions (
-    session_id INTEGER PRIMARY KEY,
+    session_id INTEGER PRIMARY KEY NOT NULL,
     member_id INTEGER NOT NULL,
     staff_id INTEGER NOT NULL,
-    session_date DATE NOT NULL
+    session_date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     notes VARCHAR(250),
+         CHECK (end_time > start_time),
     FOREIGN KEY (member_id)
         REFERENCES members(member_id)
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT,
     FOREIGN KEY(staff_id)
-        REFRENCES staff(staff_id)
-        ON DELETE NO ACTION,
-    CHECK (end_time . start_time)
+        REFERENCES staff(staff_id)
+        ON DELETE NO ACTION
 
 );
 
@@ -220,18 +224,18 @@ CREATE TABLE member_health_metrics (
     metric_id INTEGER PRIMARY KEY NOT NULL,
     member_id INTEGER NOT NULL,
     measurement_date DATE NOT NULL,
-    weight DECIMAL (5,2),
-        CHECK (weight is NULL OR weight > 0),
-    body_fat_percentage DECIMAL(5,2),
+    weight DECIMAL(5,2)
+        CHECK ( weight > 0),
+    body_fat_percentage DECIMAL(5,2)
         CHECK (body_fat_percentage BETWEEN 0 AND 100),
-    muscle_mass DECIMAL (5,2
+    muscle_mass DECIMAL (5,2)
          CHECK (muscle_mass >= 0),
     bmi DECIMAL (4,2)
          CHECK (bmi > 0),
     FOREIGN KEY(member_id)
         REFERENCES members(member_id)
         ON DELETE RESTRICT,
-    UNIQUE (members_id, measurement_date)
+    UNIQUE (member_id, measurement_date)
 
 );
 
@@ -246,7 +250,7 @@ CREATE TABLE equipment_maintenance_log(
         ON DELETE CASCADE,
     FOREIGN KEY (staff_id)
         REFERENCES staff(staff_id)
-        ON DELETE SET NULL
+        ON DELETE SET NULL,
     UNIQUE (equipment_id, maintenance_date)
 
 );
