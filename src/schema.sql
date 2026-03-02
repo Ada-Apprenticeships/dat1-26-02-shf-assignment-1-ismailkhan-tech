@@ -63,7 +63,7 @@ CREATE TABLE staff (
     phone_number VARCHAR(20) NOT NULL 
         CHECK (LENGTH(phone_number) >=12), -- staff phones may be required to have a country code
     position VARCHAR(20) NOT NULL 
-        CHECK (position IN ('Trainer','Manager','Receptionist','Maintenance')),
+        CHECK (position IN ('Trainer','Manager','Receptionist','Maintenance')), -- restricts to valid job roles only
     hire_date DATE NOT NULL, 
     location_id INTEGER,
     FOREIGN KEY (location_id)
@@ -109,6 +109,7 @@ CREATE TABLE classes(
     FOREIGN KEY (location_id)
         REFERENCES locations (location_id)
         ON DELETE SET NULL
+    --If location closes, class definitions remain (it might be offered elsewhere)
     
 );
 
@@ -123,11 +124,11 @@ CREATE TABLE class_schedule (
     CHECK(end_time > start_time),
     FOREIGN KEY (class_id)
         REFERENCES classes (class_id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE --If class type deleted, delete all scheduled sessions, no point keeping sessions for non existent class types
         ON UPDATE CASCADE,
     FOREIGN KEY(staff_id)
         REFERENCES staff(staff_id)
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT -- prevents deleting staff who have scheduled classes, so they must re-assign or cancel classes before removing staff
         ON UPDATE CASCADE
 );
 
@@ -140,8 +141,8 @@ CREATE TABLE memberships(
          CHECK (membership_type IN ('Monthly', 'Annual', 'Day Pass', 'Student', 'Senior')),
     start_date DATE NOT NULL,
     end_date DATE NOT NULL
-        CHECK (end_date > start_date),
-    status VARCHAR(20) NOT NULL DEFAULT 'Active' 
+        CHECK (end_date > start_date), --End date must be after start date
+    status VARCHAR(20) NOT NULL DEFAULT 'Active' -- defualts to active when created
         CHECK (status IN ('Active', 'Inactive')),
     FOREIGN KEY(member_id)
         REFERENCES members(member_id)
@@ -158,13 +159,14 @@ CREATE TABLE attendance (
     location_id INTEGER NOT NULL,
     check_in_time DATETIME NOT NULL,
     check_out_time DATETIME,
-        CHECK (check_out_time IS NULL OR check_out_time > check_in_time),
+        CHECK (check_out_time IS NULL OR check_out_time > check_in_time), -- check-out time must be after check-in time
     FOREIGN KEY (member_id)
         REFERENCES members (member_id)
-        ON DELETE RESTRICT,
+        ON DELETE RESTRICT,-- cannot delete member with attendance history, as it may be important for audit trails or access logs
     FOREIGN KEY (location_id)
         REFERENCES locations(location_id)
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT -- cannot delete location with attendance records, historical data may need to be preserved for audits or reporting
+
 );
 
 --class attendance
@@ -177,10 +179,10 @@ CREATE TABLE class_attendance (
         CHECK (attendance_status IN ('Registered','Attended','Unattended')),
     FOREIGN KEY (schedule_id)
         REFERENCES class_schedule(schedule_id)
-        ON DELETE CASCADE,
+        ON DELETE CASCADE, --If class is cancelled, delete registrations, no point keeping registrations for cancelled lessons
     FOREIGN KEY (member_id)
         REFERENCES members(member_id)
-        ON DELETE RESTRICT,
+        ON DELETE RESTRICT, --Cannot delete member with class history
     UNIQUE (schedule_id, member_id)
 
 );
@@ -191,14 +193,15 @@ CREATE TABLE payments (
     payment_id INTEGER PRIMARY KEY NOT NULL,
     member_id INTEGER NOT NULL,
     amount DECIMAL(10, 2) NOT NULL
-        CHECK (amount >= 0),
+        CHECK (amount >= 0), 
     payment_date DATETIME NOT NULL,
     payment_method VARCHAR(30) NOT NULL
         CHECK (payment_method IN ('Credit Card','Bank Transfer','PayPal')),
-    payment_type VARCHAR(100) NOT NULL,
+    payment_type VARCHAR(100) NOT NULL, --Has no check because it might include various descriptions,  e.g, "Monthly membership fee", "Day pass", "Personal Training,Late Cancellation fee"
     FOREIGN KEY (member_id)
         REFERENCES members(member_id)
         ON DELETE RESTRICT
+        --Shouldnt delete member with payment history, incase for a audit trail or accounting resource
 
 );
 
@@ -209,14 +212,14 @@ CREATE TABLE personal_training_sessions (
     session_date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    notes VARCHAR(250),
+    notes VARCHAR(250), -- nullable because its not always needed
          CHECK (end_time > start_time),
     FOREIGN KEY (member_id)
         REFERENCES members(member_id)
-        ON DELETE RESTRICT,
+        ON DELETE RESTRICT, --To preserve session history when member leaves
     FOREIGN KEY(staff_id)
         REFERENCES staff(staff_id)
-        ON DELETE NO ACTION
+        ON DELETE NO ACTION --Prevents deleting trainer with sessions, this forces you to re-assign the session before deleting the trainer from the system
 
 );
 
@@ -226,16 +229,16 @@ CREATE TABLE member_health_metrics (
     measurement_date DATE NOT NULL,
     weight DECIMAL(5,2)
         CHECK ( weight > 0),
-    body_fat_percentage DECIMAL(5,2)
-        CHECK (body_fat_percentage BETWEEN 0 AND 100),
+    body_fat_percentage DECIMAL(5,2) -- must be positive
+        CHECK (body_fat_percentage BETWEEN 0 AND 100), -- Between allows it to be in the range of 0-100, so the percentage has to be in this range
     muscle_mass DECIMAL (5,2)
          CHECK (muscle_mass >= 0),
     bmi DECIMAL (4,2)
-         CHECK (bmi > 0),
+         CHECK (bmi > 0), -- must be positive
     FOREIGN KEY(member_id)
         REFERENCES members(member_id)
         ON DELETE RESTRICT,
-    UNIQUE (member_id, measurement_date)
+    UNIQUE (member_id, measurement_date) -- enforces that one set of measurement per member per day ( each member can only have one health record per day), this is used as it prevents duplicate entries for the same date
 
 );
 
@@ -243,14 +246,14 @@ CREATE TABLE equipment_maintenance_log(
     log_id INTEGER PRIMARY KEY NOT NULL,
     equipment_id INTEGER NOT NULL,
     maintenance_date DATE NOT NULL,
-    description VARCHAR(255),
-    staff_id INTEGER,
+    description VARCHAR(255), -- nullable, may be a routine check so may not need a description
+    staff_id INTEGER, -- nullable as the mainternance might be from an external third party contractor
     FOREIGN KEY (equipment_id)
         REFERENCES equipment(equipment_id)
-        ON DELETE CASCADE,
+        ON DELETE CASCADE, -- if equipment is disposed of, delete its maintenance logs, no need to keep logs for equipment that dont exist
     FOREIGN KEY (staff_id)
         REFERENCES staff(staff_id)
-        ON DELETE SET NULL,
-    UNIQUE (equipment_id, maintenance_date)
+        ON DELETE SET NULL, --This preserves maintenance hsitory if staff leaves
+    UNIQUE (equipment_id, maintenance_date) --One maintenance log per equipment per day, so ensures each piece of equipment can have one maintenance log per day (prevents duplicate logs for same the equipment on the same date)
 
 );

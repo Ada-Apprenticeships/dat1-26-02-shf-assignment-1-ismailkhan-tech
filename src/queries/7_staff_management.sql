@@ -17,7 +17,7 @@ SELECT
     COUNT(pts.session_id) AS session_count
 FROM staff s   
 JOIN personal_training_sessions pts
-    ON s.staff_id = pts.staff_Id
+    ON s.staff_id = pts.staff_id
 WHERE s.position = 'Trainer'
 AND pts.session_date
 BETWEEN '2025-01-20' AND date('2025-01-20', '+30 days')

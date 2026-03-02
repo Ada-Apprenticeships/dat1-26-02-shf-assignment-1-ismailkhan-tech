@@ -2,10 +2,10 @@
 .mode column
 
 -- 4.1 
-SELECT DISTINCT
+SELECT DISTINCT --removes duplicates 
     c.class_id,
     c.name AS class_name,
-    s.first_name || ' ' || s.last_name  AS instructor_name
+    s.first_name || ' ' || s.last_name  AS instructor_name -- || concatenates strings
 FROM classes c
 JOIN class_schedule cs ON c.class_id = cs.class_id
 JOIN staff s ON cs.staff_id = s.staff_id
@@ -17,12 +17,12 @@ SELECT
     c.name,
     cs.start_time,
     cs.end_time,
-    (c.capacity - COUNT(ca.class_attendance_id)) AS avaialble_spots
+    (c.capacity - COUNT(ca.class_attendance_id)) AS available_spots
 FROM classes c 
 JOIN class_schedule cs ON c.class_id = cs.class_id
-LEFT JOIN class_attendance CA
+LEFT JOIN class_attendance CA --LEFT join used so classes show even if nobody registed yet (shows full capacity)
     ON cs.schedule_id = ca.schedule_id
-WHERE date(cs.start_time) = '2025-02-01'
+WHERE date(cs.start_time) = '2025-02-01' --
 GROUP BY cs.schedule_id;
 
 
@@ -61,3 +61,4 @@ FROM (
     FROM class_attendance
     WHERE attendance_status IN ('Registered', 'Attended')
     GROUP BY member_id
+);

@@ -12,6 +12,7 @@ FROM members;
 
 
 -- 1.2
+--Used WHERE to ensure only one row is affected
 UPDATE members
 SET
     phone_number = '07000 100005',
@@ -25,6 +26,8 @@ FROM members;
 
 
 -- 1.4
+-- INNER JOIN used so only members with registrations are included
+--GROUP BY required so COUNT works on each individual member
 SELECT
     m.member_id,
     m.first_name,
@@ -38,6 +41,8 @@ ORDER BY registration_count DESC
 LIMIT 1;
 
 -- 1.5
+--LEFT JOIN used to incude member with 0 registrations
+--If theres no match in class_attendance, COUNT will return 0
 SELECT
     m.member_id,
     m.first_name,
@@ -52,6 +57,8 @@ LIMIT 1;
 
 
 -- 1.6
+--Subquery is used to identify members with atleast 2 attended classes
+--HAVING is used as the filtering is done after GROUP BY
 SELECT COUNT(*) AS total_count
 FROM(
     SELECT member_id
