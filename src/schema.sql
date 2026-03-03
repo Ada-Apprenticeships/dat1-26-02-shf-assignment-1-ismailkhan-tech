@@ -87,7 +87,7 @@ CREATE TABLE equipment (
     --Date Check Constraints
     CHECK (next_maintenance_date >= purchase_date),
     CHECK (next_maintenance_date > last_maintenance_date OR last_maintenance_date IS NULL),
-    -- Reason i formatted it this way is because it does not do multi-column CHECK constraints at column level
+    -- -- DId a Table-level CHECK because this compares multiple columns
     FOREIGN KEY (location_id)
         REFERENCES locations (location_id)
         ON DELETE SET NULL

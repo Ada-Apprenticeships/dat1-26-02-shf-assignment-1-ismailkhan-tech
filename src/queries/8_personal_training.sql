@@ -4,12 +4,12 @@
 -- 8.1 
 SELECT
     pts.session_id,
-    m.first_name || ' ' || m.last_name AS member_name,
+    m.first_name || ' ' || m.last_name AS member_name, -- simply concaetenates member name parts
     pts.session_date,
     pts.start_time,
     pts.end_time
 FROM personal_training_sessions pts
 JOIN staff s ON pts.staff_id = s.staff_id
-JOIN members m ON pts.member_id = m.member_Id
+JOIN members m ON pts.member_id = m.member_id
 WHERE s.first_name = 'Ivy'
 AND s.last_name = 'Irwin' ;

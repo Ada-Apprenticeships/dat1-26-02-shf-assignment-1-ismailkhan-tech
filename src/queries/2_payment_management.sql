@@ -12,7 +12,7 @@ VALUES
 -- 2.2 
 SELECT
     strftime('%Y-%m', payment_date) AS month,--extracts year-month format for grouping 
-    SUM(amount)--SUM adds up all payment amounts per month
+    SUM(amount) AS total_revenue--SUM adds up all payment amounts per month
 FROM payments
 WHERE payment_type = 'Monthly membership fee'
 AND payment_date BETWEEN '2024-11-01' AND '2025-02-28 23:59:59'
@@ -24,7 +24,7 @@ ORDER BY month;
 SELECT
     payment_id,
     amount,
-    paymen_date,
+    payment_date,
     payment_method
 FROM payments
 WHERE payment_type = 'Day pass';
