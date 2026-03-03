@@ -20,7 +20,7 @@ GROUP BY strftime('%Y-%m', payment_date)-- GROUP BY creates separate totals for 
 ORDER BY month;
 
 -- 2.3 
---filters to return all payments where payment_type = 'Day pass'
+--filters to return all payments where payment_type = 'Day pass'--
 SELECT
     payment_id,
     amount,
