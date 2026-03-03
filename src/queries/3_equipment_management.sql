@@ -1,5 +1,5 @@
 .open fittrackpro.db
-.mode column
+.mode box
 
 -- 3.1 
 --Find equipment due for maintenance in the next 30 days

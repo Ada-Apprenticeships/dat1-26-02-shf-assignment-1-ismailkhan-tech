@@ -1,5 +1,5 @@
 .open fittrackpro.db
-.mode column
+.mode box
 
 -- 4.1 
 SELECT DISTINCT --removes duplicates 

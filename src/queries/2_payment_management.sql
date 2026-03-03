@@ -1,5 +1,5 @@
 .open fittrackpro.db
-.mode column
+.mode box
 
 -- 2.1 
 --date time (now) is used to capture a timestamp
