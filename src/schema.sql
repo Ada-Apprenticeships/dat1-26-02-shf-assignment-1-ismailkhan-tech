@@ -2,7 +2,7 @@
 .mode box
 
 
-PRAGMA foreign_keys = ON;
+
 DROP TABLE IF EXISTS equipment_maintenance_log;
 DROP TABLE IF EXISTS member_health_metrics;
 DROP TABLE IF EXISTS personal_training_sessions;
@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS equipment;
 DROP TABLE IF EXISTS staff;
 DROP TABLE IF EXISTS members;
 DROP TABLE IF EXISTS locations;
+PRAGMA foreign_keys = ON;
 
 --locations table
 
@@ -138,7 +139,7 @@ CREATE TABLE memberships(
     membership_id INTEGER PRIMARY KEY NOT NULL,
     member_id INTEGER NOT NULL,
     membership_type VARCHAR(50) NOT NULL
-         CHECK (membership_type IN ('Monthly', 'Annual', 'Day Pass', 'Student', 'Senior')),
+         CHECK (membership_type IN ('Monthly', 'Annual', 'Day Pass', 'Student', 'Senior','Standard','Premium')),
     start_date DATE NOT NULL,
     end_date DATE NOT NULL
         CHECK (end_date > start_date), --End date must be after start date
@@ -196,7 +197,7 @@ CREATE TABLE payments (
         CHECK (amount >= 0), 
     payment_date DATETIME NOT NULL,
     payment_method VARCHAR(30) NOT NULL
-        CHECK (payment_method IN ('Credit Card','Bank Transfer','PayPal')),
+        CHECK (payment_method IN ('Credit Card','Bank Transfer','PayPal','Cash')),
     payment_type VARCHAR(100) NOT NULL, --Has no check because it might include various descriptions,  e.g, "Monthly membership fee", "Day pass", "Personal Training,Late Cancellation fee"
     FOREIGN KEY (member_id)
         REFERENCES members(member_id)

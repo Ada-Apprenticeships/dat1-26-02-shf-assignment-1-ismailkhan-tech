@@ -40,15 +40,13 @@ INSERT INTO class_schedule (schedule_id,class_id,staff_id,start_time,end_time) V
 (1,1,2,'2025-02-01 09:00:00','2025-02-01 09:45:00'),
 (2,2,4,'2025-02-01 10:00:00','2025-02-01 11:00:00'),
 (3,3,2,'2025-02-02 18:00:00','2025-02-02 18:30:00'),
-(7,2,4,'2025-02-05 12:00:00','2025-02-05 13:00:00'),
-(8,1,2,'2025-02-06 09:00:00','2025-02-06 09:45:00'),
-(9,3,2,'2025-02-07 18:00:00','2025-02-07 18:30:00');
+(7,2,4,'2025-02-05 12:00:00','2025-02-05 13:00:00');
 
 INSERT INTO memberships (membership_id,member_id,membership_type,start_date,end_date,status) VALUES
-(1,1,'Monthly','2024-01-01','2025-01-01','Inactive'),
-(2,2,'Monthly','2024-06-15','2025-06-15','Active'),
-(3,3,'Monthly','2024-03-20','2025-03-20','Active'),
-(4,5,'Monthly','2024-05-10','2025-05-10','Active');
+(1,1,'Standard','2024-01-01','2025-01-01','Inactive'),
+(2,2,'Premium','2024-06-15','2025-06-15','Active'),
+(3,3,'Standard','2024-03-20','2025-03-20','Active'),
+(4,5,'Premium','2024-05-10','2025-05-10','Active');
 
 INSERT INTO attendance (attendance_id,member_id,location_id,check_in_time,check_out_time) VALUES
 (1,5,1,'2025-01-10 08:00:00','2025-01-10 09:30:00'),
@@ -63,9 +61,7 @@ INSERT INTO class_attendance (class_attendance_id,schedule_id,member_id,attendan
 (5,2,1,'Attended'),
 (6,2,2,'Registered'),
 (7,3,4,'Attended'),
-(13,7,1,'Attended'),
-(14,8,2,'Attended'),
-(15,9,5,'Attended');
+(13,7,1,'Attended');
 
 INSERT INTO payments (payment_id,member_id,amount,payment_date,payment_method,payment_type) VALUES
 (1,1,40.00,'2024-11-01 10:00:00','Credit Card','Monthly membership fee'),
@@ -74,7 +70,7 @@ INSERT INTO payments (payment_id,member_id,amount,payment_date,payment_method,pa
 (4,5,60.00,'2024-12-10 14:00:00','PayPal','Monthly membership fee'),
 (5,1,40.00,'2025-01-01 10:00:00','Credit Card','Monthly membership fee'),
 (6,2,60.00,'2025-01-15 12:00:00','Bank Transfer','Monthly membership fee'),
-(7,11,20.00,'2025-01-20 15:30:00','PayPal','Day pass');
+(7,11,20.00,'2025-01-20 15:30:00','Cash','Day pass');
 
 INSERT INTO personal_training_sessions (session_id,member_id,staff_id,session_date,start_time,end_time,notes) VALUES
 (1,1,2,'2025-01-25','09:00:00','10:00:00','Cardio focus'),
