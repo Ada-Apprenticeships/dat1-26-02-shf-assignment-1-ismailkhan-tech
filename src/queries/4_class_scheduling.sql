@@ -21,8 +21,9 @@ SELECT
 FROM classes c 
 JOIN class_schedule cs ON c.class_id = cs.class_id
 LEFT JOIN class_attendance ca --LEFT join used so classes show even if nobody registed yet (shows full capacity)
-    ON cs.schedule_id = ca.schedule_id
-WHERE date(cs.start_time) = '2025-02-01' --
+    ON cs.schedule_id = ca.schedule_id 
+    AND ca.attendance_status = 'Registered' -- only takes away registered (not attended and unattended) from available spots
+WHERE date(cs.start_time) = '2025-02-01' --date() takes from datetime
 GROUP BY cs.schedule_id; --Used GROUP BY to count registration per individual session
 
 
@@ -33,7 +34,7 @@ VALUES(1, 11, 'Registered');
 
 
 -- 4.4 
-DELETE FROM class_attendance --DELETE used instead of UPDATE becausr we want to completely remove the registration
+DELETE FROM class_attendance --DELETE used instead of UPDATE because we want to completely remove the registration
 WHERE schedule_id = 7
 AND member_id = 3;
 

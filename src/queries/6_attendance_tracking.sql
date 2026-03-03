@@ -12,8 +12,8 @@ SELECT
     check_in_time,
     check_out_time
 FROM attendance
-WHERE member_id = 5;
-ORDER BY check_in_time DESC; -- better readablity
+WHERE member_id = 5
+ORDER BY check_in_time DESC; -- better readability
 
 -- 6.3 
 SELECT
