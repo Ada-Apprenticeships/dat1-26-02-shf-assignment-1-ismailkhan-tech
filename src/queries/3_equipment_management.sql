@@ -10,7 +10,7 @@ SELECT
     next_maintenance_date
 FROM equipment
 WHERE next_maintenance_date
-BETWEEN '25-01-01' AND date('25-01-01', '+30 days') -- adds 30 days to the start date
+BETWEEN '2025-01-01' AND date('25-01-01', '+30 days') -- adds 30 days to the start date
 ORDER BY next_maintenance_date;
 
 --3.2

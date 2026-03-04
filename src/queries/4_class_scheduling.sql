@@ -49,7 +49,7 @@ JOIN class_attendance ca ON cs.schedule_id = ca.schedule_id
 WHERE ca.attendance_status = 'Registered' --This filters to 'Registered' to count current registrations only
 GROUP BY c.class_id
 ORDER BY registration_count DESC
-LIMIT 1;
+LIMIT 3;
 
 
 -- 4.6 
